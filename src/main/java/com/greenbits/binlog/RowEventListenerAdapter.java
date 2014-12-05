@@ -105,7 +105,7 @@ public class RowEventListenerAdapter implements BinlogEventListener {
     }
 
     private void handleRotateEvent(RotateEvent event) {
-        checkpointer.checkpoint(event.getBinlogFileName().toString(), event.getBinlogPosition());
+        checkpointer.rotate(event.getBinlogFileName().toString(), event.getBinlogPosition());
     }
 
     private void handleUnknownEvent(BinlogEventV4 event) {

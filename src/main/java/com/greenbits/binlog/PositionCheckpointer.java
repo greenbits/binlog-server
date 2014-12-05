@@ -17,7 +17,7 @@ public interface PositionCheckpointer {
      * @param fileName the current file name
      * @param position the current position
      */
-    public void checkpoint(String fileName, long position);
+    public void rotate(String fileName, long position);
 
     /**
      * @return the current binlog file name.
