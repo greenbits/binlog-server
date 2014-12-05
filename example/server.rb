@@ -1,6 +1,5 @@
 require 'rubygems'
-gem 'binlog-server'
-require 'binlog'
+require 'binlog-server'
 
 class MyPositionCheckpointer
   attr_reader :file_name, :position
@@ -13,17 +12,41 @@ class MyPositionCheckpointer
   def rotate(file_name, position)
     @file_name = file_name
     @position = position
+    puts "rotate: #{@file_name}, #{@position}"
   end
   
   def checkpoint(position)
     @position = position
+    puts "checkpoint: #{@position}"
   end
 end
 
 class MyRowEventListener
   include Binlog::RowEventListener
-  
-  # implement the interface here
+
+  def startup(version)
+    puts "Startup"
+  end
+
+  def begin_transaction
+    puts "Begin transaction"
+  end
+
+  def update(event)
+    puts "Update"
+  end
+
+  def write(event)
+    puts "Write"
+  end
+
+  def delete(event)
+    puts "Delete"
+  end
+
+  def commit_transaction
+    puts "Commit Transaction"
+  end
 end
 
 server = Binlog::RowServer.new
