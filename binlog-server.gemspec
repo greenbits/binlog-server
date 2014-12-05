@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["ben@greenbits.com"]
   spec.summary       = %q{MySQL row based replication binlog server based on open replication.}
   spec.description   = %q{MySQL row based replication binlog server based on open replication.}
-  spec.homepage      = ""
+  spec.homepage      = "http://github.com/greenbits/binlog-server"
   spec.license       = "MIT"
   spec.platform      = 'java'
 
