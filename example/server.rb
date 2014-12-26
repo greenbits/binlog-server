@@ -32,16 +32,20 @@ class MyRowEventListener
     puts "Begin transaction"
   end
 
-  def update(event)
+  def on_update(event)
     puts "Update"
   end
 
-  def write(event)
+  def on_write(event)
     puts "Write"
   end
 
-  def delete(event)
+  def on_delete(event)
     puts "Delete"
+  end
+  
+  def on_error(error)
+    puts "Error"
   end
 
   def commit_transaction

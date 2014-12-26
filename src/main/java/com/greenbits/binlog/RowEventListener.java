@@ -5,11 +5,13 @@ public interface RowEventListener {
 
     void beginTransaction();
 
-    void update(UpdateEvent updateEvent);
+    void onUpdate(UpdateEvent updateEvent);
 
-    void write(WriteEvent writeEvent);
+    void onWrite(WriteEvent writeEvent);
 
-    void delete(DeleteEvent deleteEvent);
+    void onDelete(DeleteEvent deleteEvent);
+    
+    void onError(Throwable error);
 
     void commitTransaction();
 }

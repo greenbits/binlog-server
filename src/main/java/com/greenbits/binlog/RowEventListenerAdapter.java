@@ -23,24 +23,28 @@ public class RowEventListenerAdapter implements BinlogEventListener {
 
     @Override
     public void onEvents(BinlogEventV4 event) {
-        if (event instanceof FormatDescriptionEvent) {
-            handleFormatDescriptionEvent((FormatDescriptionEvent) event);
-        } else if (event instanceof WriteRowsEventV2) {
-            handleWriteRowsEvent((WriteRowsEventV2) event);
-        } else if (event instanceof UpdateRowsEventV2) {
-            handleUpdateRowsEvent((UpdateRowsEventV2) event);
-        } else if (event instanceof DeleteRowsEventV2) {
-            handleDeleteRowsEvent((DeleteRowsEventV2) event);
-        } else if (event instanceof RotateEvent) {
-            handleRotateEvent((RotateEvent) event);
-        } else if (event instanceof TableMapEvent) {
-            handleTableMapEvent((TableMapEvent) event);
-        } else if (event instanceof QueryEvent) {
-            handleQueryEvent((QueryEvent) event);
-        } else if (event instanceof XidEvent) {
-            handleXidEvent((XidEvent)event);
-        } else {
-            handleUnknownEvent(event);
+        try {
+            if (event instanceof FormatDescriptionEvent) {
+                handleFormatDescriptionEvent((FormatDescriptionEvent) event);
+            } else if (event instanceof WriteRowsEventV2) {
+                handleWriteRowsEvent((WriteRowsEventV2) event);
+            } else if (event instanceof UpdateRowsEventV2) {
+                handleUpdateRowsEvent((UpdateRowsEventV2) event);
+            } else if (event instanceof DeleteRowsEventV2) {
+                handleDeleteRowsEvent((DeleteRowsEventV2) event);
+            } else if (event instanceof RotateEvent) {
+                handleRotateEvent((RotateEvent) event);
+            } else if (event instanceof TableMapEvent) {
+                handleTableMapEvent((TableMapEvent) event);
+            } else if (event instanceof QueryEvent) {
+                handleQueryEvent((QueryEvent) event);
+            } else if (event instanceof XidEvent) {
+                handleXidEvent((XidEvent)event);
+            } else {
+                handleUnknownEvent(event);
+            }
+        } catch (Throwable t) {
+            handleError(t);
         }
     }
 
@@ -58,7 +62,7 @@ public class RowEventListenerAdapter implements BinlogEventListener {
                 event.getUsedColumns().getValue(),
                 event.getExtraInfo());
 
-        listener.write(writeEvent);
+        listener.onWrite(writeEvent);
         checkpointer.checkpoint(getNextPosition(event));
     }
 
@@ -70,7 +74,7 @@ public class RowEventListenerAdapter implements BinlogEventListener {
                 event.getUsedColumnsAfter().getValue(),
                 event.getExtraInfo());
 
-        listener.update(updateEvent);
+        listener.onUpdate(updateEvent);
         checkpointer.checkpoint(getNextPosition(event));
     }
 
@@ -81,7 +85,7 @@ public class RowEventListenerAdapter implements BinlogEventListener {
                 event.getUsedColumns().getValue(),
                 event.getExtraInfo());
 
-        listener.delete(deleteEvent);
+        listener.onDelete(deleteEvent);
         checkpointer.checkpoint(getNextPosition(event));
     }
 
@@ -111,6 +115,10 @@ public class RowEventListenerAdapter implements BinlogEventListener {
     private void handleUnknownEvent(BinlogEventV4 event) {
         BinlogEventV4Header header = event.getHeader();
         throw new IllegalStateException("Unknown MySQL binlog event type " + header.getEventType() + ".");
+    }
+    
+    private void handleError(Throwable t) {
+        listener.onError(t);
     }
 
     private String getTableName(long tableId) {
