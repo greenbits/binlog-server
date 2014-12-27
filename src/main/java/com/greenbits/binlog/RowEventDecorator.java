@@ -1,10 +1,14 @@
 package com.greenbits.binlog;
 
 public class RowEventDecorator implements RowEventListener {
-    protected RowEventListener nextListener;
+    private RowEventListener nextListener;
     
     public RowEventDecorator(RowEventListener nextListener) {
         this.nextListener = nextListener;
+    }
+    
+    public RowEventListener getNextListener() {
+        return this.nextListener;
     }
     
     @Override
