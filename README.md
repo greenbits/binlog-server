@@ -22,6 +22,7 @@ Or install it yourself as:
 ## Building
 
     $ mvn package
+    $ VERSION="1.2.0" rake bump_version # To change the version in both ruby and java
     $ rake build
 
 ## Usage
