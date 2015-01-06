@@ -94,7 +94,7 @@ public class RowEventListenerAdapter implements BinlogEventListener {
         if (sql.equals("BEGIN")) {
             listener.beginTransaction();
         } else {
-            throw new IllegalStateException("Unknown sql string for QueryEvent " + sql + ".");
+            listener.onQuery(sql);
         }
     }
 
