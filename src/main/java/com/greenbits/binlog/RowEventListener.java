@@ -10,7 +10,9 @@ public interface RowEventListener {
     void onWrite(WriteEvent writeEvent);
 
     void onDelete(DeleteEvent deleteEvent);
-    
+
+    void onQuery(String sql);
+
     void onError(Throwable error);
 
     void commitTransaction();
