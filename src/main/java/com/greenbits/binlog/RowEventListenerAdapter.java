@@ -93,14 +93,15 @@ public class RowEventListenerAdapter implements BinlogEventListener {
         String sql = event.getSql().toString();
         if (sql.equals("BEGIN")) {
             listener.beginTransaction();
+        } else if (sql.equals("COMMIT")) {
+            commitTransaction(event);
         } else {
             listener.onQuery(sql);
         }
     }
 
     private void handleXidEvent(XidEvent event) {
-        checkpointer.checkpoint(getNextPosition(event));
-        listener.commitTransaction();
+        commitTransaction(event);
     }
 
     private void handleTableMapEvent(TableMapEvent event) {
@@ -116,9 +117,14 @@ public class RowEventListenerAdapter implements BinlogEventListener {
         BinlogEventV4Header header = event.getHeader();
         throw new IllegalStateException("Unknown MySQL binlog event type " + header.getEventType() + ".");
     }
-    
+
     private void handleError(Throwable t) {
         listener.onError(t);
+    }
+
+    private void commitTransaction(AbstractBinlogEventV4 event) {
+        checkpointer.checkpoint(getNextPosition(event));
+        listener.commitTransaction();
     }
 
     private String getTableName(long tableId) {
