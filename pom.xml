@@ -4,7 +4,7 @@
 
   <groupId>com.greenbits.binlog</groupId>
   <artifactId>binlog-server</artifactId>
-  <version>1.2.3</version>
+  <version>1.2.4</version>
   <packaging>jar</packaging>
 
   <name>binlog-server</name>
@@ -12,8 +12,6 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.6</maven.compiler.source>
-    <maven.compiler.target>1.6</maven.compiler.target>
   </properties>
 
   <dependencies>
