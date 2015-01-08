@@ -44,7 +44,7 @@ public class RowEventListenerAdapter implements BinlogEventListener {
                 handleUnknownEvent(event);
             }
         } catch (Throwable t) {
-            handleError(t);
+            handleError(t, event);
         }
     }
 
@@ -118,8 +118,8 @@ public class RowEventListenerAdapter implements BinlogEventListener {
         throw new IllegalStateException("Unknown MySQL binlog event type " + header.getEventType() + ".");
     }
 
-    private void handleError(Throwable t) {
-        listener.onError(t);
+    private void handleError(Throwable t, BinlogEventV4 event) {
+        listener.onError(t, event);
     }
 
     private void commitTransaction(AbstractBinlogEventV4 event) {

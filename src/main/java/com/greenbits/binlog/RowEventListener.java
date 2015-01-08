@@ -13,7 +13,7 @@ public interface RowEventListener {
 
     void onQuery(String sql);
 
-    void onError(Throwable error);
+    void onError(Throwable error, BinlogEventV4 event);
 
     void commitTransaction();
 }
