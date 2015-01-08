@@ -1,5 +1,7 @@
 package com.greenbits.binlog;
 
+import com.google.code.or.binlog.BinlogEventV4; 
+
 public interface RowEventListener {
     void startup(ServerVersion version);
 
