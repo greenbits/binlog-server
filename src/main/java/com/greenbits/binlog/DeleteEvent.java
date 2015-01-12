@@ -1,23 +1,24 @@
 package com.greenbits.binlog;
 
+import com.google.code.or.binlog.impl.event.TableMapEvent;
 import com.google.code.or.common.glossary.Row;
 
 import java.util.List;
 
 public class DeleteEvent {
-    private final String tableName;
+    private final TableMapEvent tableMapEvent;
     private final List<Row> rows;
     private final int columnCount;
     private final byte[] usedColumns;
     private final byte[] extraInfo;
 
-    public DeleteEvent(String tableName,
+    public DeleteEvent(TableMapEvent tableMapEvent,
                        List<Row> rows,
                        int columnCount,
                        byte[] usedColumns,
                        byte[] extraInfo) {
 
-        this.tableName = tableName;
+        this.tableMapEvent = tableMapEvent;
         this.rows = rows;
         this.columnCount = columnCount;
         this.usedColumns = usedColumns;
@@ -25,7 +26,11 @@ public class DeleteEvent {
     }
 
     public String getTableName() {
-        return tableName;
+        return tableMapEvent.getTableName().toString();
+    }
+
+    public String getDatabaseName() {
+        return tableMapEvent.getDatabaseName().toString();
     }
 
     public List<Row> getRows() {

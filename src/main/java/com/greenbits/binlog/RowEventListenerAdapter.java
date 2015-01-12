@@ -9,16 +9,19 @@ import java.util.HashMap;
 
 public class RowEventListenerAdapter implements BinlogEventListener {
     private RowEventListener listener;
-    private HashMap<Long, String> tableIdToNameMap;
+    private HashMap<Long, TableMapEvent> tableIdToTableMapEvent;
+    private String databaseName;
+
     private PositionCheckpointer checkpointer;
 
     public RowEventListenerAdapter(RowEventListener listener,
-                                   PositionCheckpointer checkpointer) {
+                                   PositionCheckpointer checkpointer,
+                                   String databaseName) {
 
         this.listener = listener;
-        this.tableIdToNameMap = new HashMap<Long, String>();
-
+        this.tableIdToTableMapEvent = new HashMap<Long, TableMapEvent>();
         this.checkpointer = checkpointer;
+        this.databaseName = databaseName;
     }
 
     @Override
@@ -56,7 +59,10 @@ public class RowEventListenerAdapter implements BinlogEventListener {
     }
 
     private void handleWriteRowsEvent(WriteRowsEventV2 event) {
-        WriteEvent writeEvent = new WriteEvent(getTableName(event.getTableId()),
+        TableMapEvent tableMapEvent = getTableMapEvent(event.getTableId());
+        if (shouldSkipOnDatabaseName(tableMapEvent.getDatabaseName().toString())) return;
+
+        WriteEvent writeEvent = new WriteEvent(tableMapEvent,
                 event.getRows(),
                 event.getColumnCount().intValue(),
                 event.getUsedColumns().getValue(),
@@ -67,7 +73,10 @@ public class RowEventListenerAdapter implements BinlogEventListener {
     }
 
     private void handleUpdateRowsEvent(UpdateRowsEventV2 event) {
-        UpdateEvent updateEvent = new UpdateEvent(getTableName(event.getTableId()),
+        TableMapEvent tableMapEvent = getTableMapEvent(event.getTableId());
+        if (shouldSkipOnDatabaseName(tableMapEvent.getDatabaseName().toString())) return;
+
+        UpdateEvent updateEvent = new UpdateEvent(tableMapEvent,
                 event.getRows(),
                 event.getColumnCount().intValue(),
                 event.getUsedColumnsBefore().getValue(),
@@ -79,7 +88,10 @@ public class RowEventListenerAdapter implements BinlogEventListener {
     }
 
     private void handleDeleteRowsEvent(DeleteRowsEventV2 event) {
-        DeleteEvent deleteEvent = new DeleteEvent(getTableName(event.getTableId()),
+        TableMapEvent tableMapEvent = getTableMapEvent(event.getTableId());
+        if (shouldSkipOnDatabaseName(tableMapEvent.getDatabaseName().toString())) return;
+
+        DeleteEvent deleteEvent = new DeleteEvent(tableMapEvent,
                 event.getRows(),
                 event.getColumnCount().intValue(),
                 event.getUsedColumns().getValue(),
@@ -90,6 +102,8 @@ public class RowEventListenerAdapter implements BinlogEventListener {
     }
 
     private void handleQueryEvent(QueryEvent event) {
+        if (shouldSkipOnDatabaseName(event.getDatabaseName().toString())) return;
+
         String sql = event.getSql().toString();
         if (sql.equals("BEGIN")) {
             listener.beginTransaction();
@@ -105,8 +119,7 @@ public class RowEventListenerAdapter implements BinlogEventListener {
     }
 
     private void handleTableMapEvent(TableMapEvent event) {
-        String tableName = event.getTableName().toString();
-        tableIdToNameMap.put(event.getTableId(), tableName);
+        tableIdToTableMapEvent.put(event.getTableId(), event);
     }
 
     private void handleRotateEvent(RotateEvent event) {
@@ -127,15 +140,19 @@ public class RowEventListenerAdapter implements BinlogEventListener {
         listener.commitTransaction();
     }
 
-    private String getTableName(long tableId) {
-        String tableName = tableIdToNameMap.get(tableId);
-        if (tableName == null) {
+    private TableMapEvent getTableMapEvent(long tableId) {
+        TableMapEvent tableMapEvent = tableIdToTableMapEvent.get(tableId);
+        if (tableMapEvent == null) {
             throw new IllegalStateException("Cannot find table with id '" + tableId + "' in the map.");
         }
-        return tableName;
+        return tableMapEvent;
     }
 
     private long getNextPosition(BinlogEventV4 event) {
         return event.getHeader().getNextPosition();
+    }
+
+    private boolean shouldSkipOnDatabaseName(String databaseName) {
+        return this.databaseName != null && !this.databaseName.equalsIgnoreCase(databaseName);
     }
 }

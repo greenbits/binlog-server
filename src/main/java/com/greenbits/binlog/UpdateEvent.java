@@ -1,26 +1,27 @@
 package com.greenbits.binlog;
 
+import com.google.code.or.binlog.impl.event.TableMapEvent;
 import com.google.code.or.common.glossary.Pair;
 import com.google.code.or.common.glossary.Row;
 
 import java.util.List;
 
 public class UpdateEvent {
-    private final String tableName;
+    private final TableMapEvent tableMapEvent;
     private final List<Pair<Row>> rows;
     private final int columnCount;
     private final byte[] usedColumnsBefore;
     private final byte[] usedColumnsAfter;
     private final byte[] extraInfo;
 
-    public UpdateEvent(String tableName,
+    public UpdateEvent(TableMapEvent tableMapEvent,
                        List<Pair<Row>> rows,
                        int columnCount,
                        byte[] usedColumnsBefore,
                        byte[] usedColumnsAfter,
                        byte[] extraInfo) {
 
-        this.tableName = tableName;
+        this.tableMapEvent = tableMapEvent;
         this.rows = rows;
         this.columnCount = columnCount;
         this.usedColumnsBefore = usedColumnsBefore;
@@ -29,7 +30,11 @@ public class UpdateEvent {
     }
 
     public String getTableName() {
-        return tableName;
+        return tableMapEvent.getTableName().toString();
+    }
+
+    public String getDatabaseName() {
+        return tableMapEvent.getDatabaseName().toString();
     }
 
     public List<Pair<Row>> getRows() {
