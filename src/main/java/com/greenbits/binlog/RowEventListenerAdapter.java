@@ -102,8 +102,6 @@ public class RowEventListenerAdapter implements BinlogEventListener {
     }
 
     private void handleQueryEvent(QueryEvent event) {
-        if (shouldSkipOnDatabaseName(event.getDatabaseName().toString())) return;
-
         String sql = event.getSql().toString();
         if (sql.equals("BEGIN")) {
             listener.beginTransaction();
