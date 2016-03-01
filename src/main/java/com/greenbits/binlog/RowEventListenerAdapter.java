@@ -6,8 +6,11 @@ import com.google.code.or.binlog.BinlogEventV4Header;
 import com.google.code.or.binlog.impl.event.*;
 
 import java.util.HashMap;
+import java.lang.System.*;
 
 public class RowEventListenerAdapter implements BinlogEventListener {
+    private static final String MYSQL_DATABASE_NAME = "mysql";
+
     private RowEventListener listener;
     private HashMap<Long, TableMapEvent> tableIdToTableMapEvent;
     private String databaseName;
@@ -102,6 +105,8 @@ public class RowEventListenerAdapter implements BinlogEventListener {
     }
 
     private void handleQueryEvent(QueryEvent event) {
+        if (shouldSkipOnDatabaseName(event.getDatabaseName().toString())) return;
+
         String sql = event.getSql().toString();
         if (sql.equals("BEGIN")) {
             listener.beginTransaction();
@@ -151,6 +156,8 @@ public class RowEventListenerAdapter implements BinlogEventListener {
     }
 
     private boolean shouldSkipOnDatabaseName(String databaseName) {
-        return this.databaseName != null && !this.databaseName.equalsIgnoreCase(databaseName);
+        return this.databaseName != null &&
+          !(this.databaseName.equalsIgnoreCase(databaseName) ||
+              this.databaseName.equalsIgnoreCase(MYSQL_DATABASE_NAME));
     }
 }

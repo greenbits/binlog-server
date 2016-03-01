@@ -6,8 +6,8 @@ require 'binlog/version'
 Gem::Specification.new do |spec|
   spec.name          = "binlog-server"
   spec.version       = Binlog::VERSION
-  spec.authors       = ["Ben Curren"]
-  spec.email         = ["ben@greenbits.com"]
+  spec.authors       = ["Ben Curren", "Trae Robrock"]
+  spec.email         = ["ben@greenbits.com", "trae@greenbits.com"]
   spec.summary       = %q{MySQL row based replication binlog server based on open replication.}
   spec.description   = %q{MySQL row based replication binlog server based on open replication.}
   spec.homepage      = "http://github.com/greenbits/binlog-server"
