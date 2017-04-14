@@ -1,6 +1,6 @@
 package com.greenbits.binlog;
 
-import com.google.code.or.binlog.BinlogEventV4; 
+import com.github.shyiko.mysql.binlog.event.Event;
 
 public interface RowEventListener {
     void startup(ServerVersion version);
@@ -15,7 +15,7 @@ public interface RowEventListener {
 
     void onQuery(String sql);
 
-    void onError(Throwable error, BinlogEventV4 event);
+    void onError(Throwable error, Event event);
 
     void commitTransaction();
 }

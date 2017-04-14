@@ -4,7 +4,7 @@
 
   <groupId>com.greenbits.binlog</groupId>
   <artifactId>binlog-server</artifactId>
-  <version>1.4.2</version>
+  <version>1.5.0</version>
   <packaging>jar</packaging>
 
   <name>binlog-server</name>
@@ -18,9 +18,9 @@
 
   <dependencies>
     <dependency>
-      <groupId>open-replicator</groupId>
-      <artifactId>open-replicator</artifactId>
-      <version>1.0.7</version>
+      <groupId>com.github.shyiko</groupId>
+      <artifactId>mysql-binlog-connector-java</artifactId>
+      <version>0.12.0</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

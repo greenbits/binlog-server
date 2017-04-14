@@ -1,18 +1,16 @@
 package com.greenbits.binlog;
 
-import com.google.code.or.binlog.BinlogEventListener;
-import com.google.code.or.binlog.BinlogEventV4;
-import com.google.code.or.binlog.BinlogEventV4Header;
-import com.google.code.or.binlog.impl.event.*;
+import com.github.shyiko.mysql.binlog.BinaryLogClient;
+import com.github.shyiko.mysql.binlog.event.*;
 
 import java.util.HashMap;
 import java.lang.System.*;
 
-public class RowEventListenerAdapter implements BinlogEventListener {
+public class RowEventListenerAdapter implements BinaryLogClient.EventListener {
     private static final String MYSQL_DATABASE_NAME = "mysql";
 
     private RowEventListener listener;
-    private HashMap<Long, TableMapEvent> tableIdToTableMapEvent;
+    private HashMap<Long, TableMapEventData> tableIdToTableMapEvent;
     private String databaseName;
 
     private PositionCheckpointer checkpointer;
@@ -22,30 +20,32 @@ public class RowEventListenerAdapter implements BinlogEventListener {
                                    String databaseName) {
 
         this.listener = listener;
-        this.tableIdToTableMapEvent = new HashMap<Long, TableMapEvent>();
+        this.tableIdToTableMapEvent = new HashMap<Long, TableMapEventData>();
         this.checkpointer = checkpointer;
         this.databaseName = databaseName;
     }
 
     @Override
-    public void onEvents(BinlogEventV4 event) {
+    public void onEvent(Event event) {
+        EventData eventData = event.getData();
         try {
-            if (event instanceof FormatDescriptionEvent) {
-                handleFormatDescriptionEvent((FormatDescriptionEvent) event);
-            } else if (event instanceof WriteRowsEventV2) {
-                handleWriteRowsEvent((WriteRowsEventV2) event);
-            } else if (event instanceof UpdateRowsEventV2) {
-                handleUpdateRowsEvent((UpdateRowsEventV2) event);
-            } else if (event instanceof DeleteRowsEventV2) {
-                handleDeleteRowsEvent((DeleteRowsEventV2) event);
-            } else if (event instanceof RotateEvent) {
-                handleRotateEvent((RotateEvent) event);
-            } else if (event instanceof TableMapEvent) {
-                handleTableMapEvent((TableMapEvent) event);
-            } else if (event instanceof QueryEvent) {
-                handleQueryEvent((QueryEvent) event);
-            } else if (event instanceof XidEvent) {
-                handleXidEvent((XidEvent)event);
+            if (eventData instanceof FormatDescriptionEventData) {
+                handleFormatDescriptionEvent(event);
+            } else if (eventData instanceof WriteRowsEventData) {
+                handleWriteRowsEvent(event);
+            } else if (eventData instanceof UpdateRowsEventData) {
+                handleUpdateRowsEvent(event);
+            } else if (eventData instanceof DeleteRowsEventData) {
+                handleDeleteRowsEvent(event);
+            } else if (eventData instanceof RotateEventData) {
+                handleRotateEvent(event);
+            } else if (eventData instanceof TableMapEventData) {
+                handleTableMapEvent(event);
+            } else if (eventData instanceof QueryEventData) {
+                handleQueryEvent(event);
+            } else if (eventData instanceof XidEventData) {
+                handleXidEvent(event);
+            } else if (event.getHeader().getEventType() == EventType.ANONYMOUS_GTID){
             } else {
                 handleUnknownEvent(event);
             }
@@ -54,60 +54,58 @@ public class RowEventListenerAdapter implements BinlogEventListener {
         }
     }
 
-    private void handleFormatDescriptionEvent(FormatDescriptionEvent event) {
+    private void handleFormatDescriptionEvent(Event event) {
+        FormatDescriptionEventData eventData = event.getData();
         listener.startup(new ServerVersion(
-                event.getBinlogVersion(),
-                event.getCreateTimestamp(),
-                event.getServerVersion().toString()));
+                eventData.getBinlogVersion(),
+                eventData.getServerVersion().toString()));
     }
 
-    private void handleWriteRowsEvent(WriteRowsEventV2 event) {
-        TableMapEvent tableMapEvent = getTableMapEvent(event.getTableId());
-        if (shouldSkipOnDatabaseName(tableMapEvent.getDatabaseName().toString())) return;
+    private void handleWriteRowsEvent(Event event) {
+        WriteRowsEventData eventData = event.getData();
+        TableMapEventData tableMapEvent = getTableMapEvent(eventData.getTableId());
+        if (shouldSkipOnDatabaseName(tableMapEvent.getDatabase())) return;
 
         WriteEvent writeEvent = new WriteEvent(tableMapEvent,
-                event.getRows(),
-                event.getColumnCount().intValue(),
-                event.getUsedColumns().getValue(),
-                event.getExtraInfo());
+                eventData.getRows(),
+                eventData.getIncludedColumns().toByteArray());
 
         listener.onWrite(writeEvent);
         checkpointer.checkpoint(getNextPosition(event));
     }
 
-    private void handleUpdateRowsEvent(UpdateRowsEventV2 event) {
-        TableMapEvent tableMapEvent = getTableMapEvent(event.getTableId());
-        if (shouldSkipOnDatabaseName(tableMapEvent.getDatabaseName().toString())) return;
+    private void handleUpdateRowsEvent(Event event) {
+        UpdateRowsEventData eventData = event.getData();
+        TableMapEventData tableMapEvent = getTableMapEvent(eventData.getTableId());
+        if (shouldSkipOnDatabaseName(tableMapEvent.getDatabase())) return;
 
         UpdateEvent updateEvent = new UpdateEvent(tableMapEvent,
-                event.getRows(),
-                event.getColumnCount().intValue(),
-                event.getUsedColumnsBefore().getValue(),
-                event.getUsedColumnsAfter().getValue(),
-                event.getExtraInfo());
+                eventData.getRows(),
+                eventData.getIncludedColumnsBeforeUpdate().toByteArray(),
+                eventData.getIncludedColumns().toByteArray());
 
         listener.onUpdate(updateEvent);
         checkpointer.checkpoint(getNextPosition(event));
     }
 
-    private void handleDeleteRowsEvent(DeleteRowsEventV2 event) {
-        TableMapEvent tableMapEvent = getTableMapEvent(event.getTableId());
-        if (shouldSkipOnDatabaseName(tableMapEvent.getDatabaseName().toString())) return;
+    private void handleDeleteRowsEvent(Event event) {
+        DeleteRowsEventData eventData = event.getData();
+        TableMapEventData tableMapEvent = getTableMapEvent(eventData.getTableId());
+        if (shouldSkipOnDatabaseName(tableMapEvent.getDatabase())) return;
 
         DeleteEvent deleteEvent = new DeleteEvent(tableMapEvent,
-                event.getRows(),
-                event.getColumnCount().intValue(),
-                event.getUsedColumns().getValue(),
-                event.getExtraInfo());
+                eventData.getRows(),
+                eventData.getIncludedColumns().toByteArray());
 
         listener.onDelete(deleteEvent);
         checkpointer.checkpoint(getNextPosition(event));
     }
 
-    private void handleQueryEvent(QueryEvent event) {
-        if (shouldSkipOnDatabaseName(event.getDatabaseName().toString())) return;
+    private void handleQueryEvent(Event event) {
+        QueryEventData eventData = event.getData();
+        if (shouldSkipOnDatabaseName(eventData.getDatabase())) return;
 
-        String sql = event.getSql().toString();
+        String sql = eventData.getSql().toString();
         if (sql.equals("BEGIN")) {
             listener.beginTransaction();
         } else if (sql.equals("COMMIT")) {
@@ -117,42 +115,43 @@ public class RowEventListenerAdapter implements BinlogEventListener {
         }
     }
 
-    private void handleXidEvent(XidEvent event) {
+    private void handleXidEvent(Event event) {
         commitTransaction(event);
     }
 
-    private void handleTableMapEvent(TableMapEvent event) {
-        tableIdToTableMapEvent.put(event.getTableId(), event);
+    private void handleTableMapEvent(Event event) {
+        TableMapEventData eventData = event.getData();
+        tableIdToTableMapEvent.put(eventData.getTableId(), eventData);
     }
 
-    private void handleRotateEvent(RotateEvent event) {
-        checkpointer.rotate(event.getBinlogFileName().toString(), event.getBinlogPosition());
+    private void handleRotateEvent(Event event) {
+        RotateEventData eventData = event.getData();
+        checkpointer.rotate(eventData.getBinlogFilename().toString(), eventData.getBinlogPosition());
     }
 
-    private void handleUnknownEvent(BinlogEventV4 event) {
-        BinlogEventV4Header header = event.getHeader();
-        throw new IllegalStateException("Unknown MySQL binlog event type " + header.getEventType() + ".");
+    private void handleUnknownEvent(Event event) {
+        throw new IllegalStateException("Unknown MySQL binlog event type " + event + ".");
     }
 
-    private void handleError(Throwable t, BinlogEventV4 event) {
+    private void handleError(Throwable t, Event event) {
         listener.onError(t, event);
     }
 
-    private void commitTransaction(AbstractBinlogEventV4 event) {
+    private void commitTransaction(Event event) {
         checkpointer.checkpoint(getNextPosition(event));
         listener.commitTransaction();
     }
 
-    private TableMapEvent getTableMapEvent(long tableId) {
-        TableMapEvent tableMapEvent = tableIdToTableMapEvent.get(tableId);
+    private TableMapEventData getTableMapEvent(long tableId) {
+        TableMapEventData tableMapEvent = tableIdToTableMapEvent.get(tableId);
         if (tableMapEvent == null) {
             throw new IllegalStateException("Cannot find table with id '" + tableId + "' in the map.");
         }
         return tableMapEvent;
     }
 
-    private long getNextPosition(BinlogEventV4 event) {
-        return event.getHeader().getNextPosition();
+    private long getNextPosition(Event event) {
+        return ((EventHeaderV4)event.getHeader()).getNextPosition();
     }
 
     private boolean shouldSkipOnDatabaseName(String databaseName) {

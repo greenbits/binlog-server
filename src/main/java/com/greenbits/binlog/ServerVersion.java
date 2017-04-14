@@ -6,21 +6,15 @@ package com.greenbits.binlog;
  */
 public class ServerVersion {
     private int version;
-    private long createdTimestamp;
     private String serverVersion;
 
-    public ServerVersion(int version, long createdTimestamp, String serverVersion) {
+    public ServerVersion(int version, String serverVersion) {
         this.version = version;
-        this.createdTimestamp = createdTimestamp;
         this.serverVersion = serverVersion;
     }
 
     public int getVersion() {
         return version;
-    }
-
-    public long getCreatedTimestamp() {
-        return createdTimestamp;
     }
 
     public String getServerVersion() {
