@@ -1,51 +1,37 @@
 package com.greenbits.binlog;
 
-import com.google.code.or.binlog.impl.event.TableMapEvent;
-import com.google.code.or.common.glossary.Row;
+import com.github.shyiko.mysql.binlog.event.TableMapEventData;
 
 import java.util.List;
+import java.io.Serializable;
 
 public class DeleteEvent {
-    private final TableMapEvent tableMapEvent;
-    private final List<Row> rows;
-    private final int columnCount;
+    private final TableMapEventData tableMapEvent;
+    private final List<Serializable[]> rows;
     private final byte[] usedColumns;
-    private final byte[] extraInfo;
 
-    public DeleteEvent(TableMapEvent tableMapEvent,
-                       List<Row> rows,
-                       int columnCount,
-                       byte[] usedColumns,
-                       byte[] extraInfo) {
+    public DeleteEvent(TableMapEventData tableMapEvent,
+                       List<Serializable[]> rows,
+                       byte[] usedColumns) {
 
         this.tableMapEvent = tableMapEvent;
         this.rows = rows;
-        this.columnCount = columnCount;
         this.usedColumns = usedColumns;
-        this.extraInfo = extraInfo;
     }
 
     public String getTableName() {
-        return tableMapEvent.getTableName().toString();
+        return tableMapEvent.getTable();
     }
 
     public String getDatabaseName() {
-        return tableMapEvent.getDatabaseName().toString();
+        return tableMapEvent.getDatabase();
     }
 
-    public List<Row> getRows() {
+    public List<Serializable[]> getRows() {
         return rows;
-    }
-
-    public int getColumnCount() {
-        return columnCount;
     }
 
     public byte[] getUsedColumns() {
         return usedColumns;
-    }
-
-    public byte[] getExtraInfo() {
-        return extraInfo;
     }
 }
