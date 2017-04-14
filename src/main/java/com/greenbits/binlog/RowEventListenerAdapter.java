@@ -55,7 +55,7 @@ public class RowEventListenerAdapter implements BinaryLogClient.EventListener {
     }
 
     private void handleFormatDescriptionEvent(Event event) {
-      FormatDescriptionEventData eventData = event.getData();
+        FormatDescriptionEventData eventData = event.getData();
         listener.startup(new ServerVersion(
                 eventData.getBinlogVersion(),
                 eventData.getServerVersion().toString()));
