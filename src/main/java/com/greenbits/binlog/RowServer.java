@@ -3,6 +3,7 @@ package com.greenbits.binlog;
 import com.github.shyiko.mysql.binlog.BinaryLogClient;
 
 import java.util.concurrent.TimeUnit;
+import java.util.Set;
 
 /**
  * The server that parses Herer's master database and ETL's models into a reporting database via
@@ -10,6 +11,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class RowServer extends BinaryLogClient {
     private String databaseName;
+    private Set tables;
     private PositionCheckpointer checkpointer;
     private RowEventListener rowEventListener;
 
@@ -37,13 +39,17 @@ public class RowServer extends BinaryLogClient {
         this.databaseName = databaseName;
     }
 
+    public void setTables(Set tables) {
+      this.tables = tables;
+    }
+
     public void start() throws Exception {
         assertOption(checkpointer != null, "Checkpointer");
         assertOption(rowEventListener != null, "Listener");
 
         setBinlogFilename(checkpointer.getFileName());
         setBinlogPosition(checkpointer.getPosition());
-        registerEventListener(new RowEventListenerAdapter(rowEventListener, checkpointer, databaseName));
+        registerEventListener(new RowEventListenerAdapter(rowEventListener, checkpointer, databaseName, tables));
 
         super.connect();
     }

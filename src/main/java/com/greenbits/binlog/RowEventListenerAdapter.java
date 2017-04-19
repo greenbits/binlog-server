@@ -4,25 +4,33 @@ import com.github.shyiko.mysql.binlog.BinaryLogClient;
 import com.github.shyiko.mysql.binlog.event.*;
 
 import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Arrays;
 import java.lang.System.*;
 
 public class RowEventListenerAdapter implements BinaryLogClient.EventListener {
     private static final String MYSQL_DATABASE_NAME = "mysql";
+    private static final EventType[] EVENTS_TO_SKIP_ARR = new EventType[] { EventType.ANONYMOUS_GTID, EventType.STOP, EventType.PREVIOUS_GTIDS };
+    private static final HashSet<EventType> EVENTS_TO_SKIP = new HashSet<EventType>(Arrays.asList(EVENTS_TO_SKIP_ARR));
 
     private RowEventListener listener;
     private HashMap<Long, TableMapEventData> tableIdToTableMapEvent;
     private String databaseName;
+    private Set<String> tables;
 
     private PositionCheckpointer checkpointer;
 
     public RowEventListenerAdapter(RowEventListener listener,
                                    PositionCheckpointer checkpointer,
-                                   String databaseName) {
+                                   String databaseName,
+                                   Set tables) {
 
         this.listener = listener;
         this.tableIdToTableMapEvent = new HashMap<Long, TableMapEventData>();
         this.checkpointer = checkpointer;
         this.databaseName = databaseName;
+        this.tables = tables;
     }
 
     @Override
@@ -45,7 +53,7 @@ public class RowEventListenerAdapter implements BinaryLogClient.EventListener {
                 handleQueryEvent(event);
             } else if (eventData instanceof XidEventData) {
                 handleXidEvent(event);
-            } else if (event.getHeader().getEventType() == EventType.ANONYMOUS_GTID){
+            } else if (EVENTS_TO_SKIP.contains(event.getHeader().getEventType())){
             } else {
                 handleUnknownEvent(event);
             }
@@ -64,7 +72,7 @@ public class RowEventListenerAdapter implements BinaryLogClient.EventListener {
     private void handleWriteRowsEvent(Event event) {
         WriteRowsEventData eventData = event.getData();
         TableMapEventData tableMapEvent = getTableMapEvent(eventData.getTableId());
-        if (shouldSkipOnDatabaseName(tableMapEvent.getDatabase())) return;
+        if (shouldSkip(tableMapEvent)) return;
 
         WriteEvent writeEvent = new WriteEvent(tableMapEvent,
                 eventData.getRows(),
@@ -77,7 +85,7 @@ public class RowEventListenerAdapter implements BinaryLogClient.EventListener {
     private void handleUpdateRowsEvent(Event event) {
         UpdateRowsEventData eventData = event.getData();
         TableMapEventData tableMapEvent = getTableMapEvent(eventData.getTableId());
-        if (shouldSkipOnDatabaseName(tableMapEvent.getDatabase())) return;
+        if (shouldSkip(tableMapEvent)) return;
 
         UpdateEvent updateEvent = new UpdateEvent(tableMapEvent,
                 eventData.getRows(),
@@ -91,7 +99,7 @@ public class RowEventListenerAdapter implements BinaryLogClient.EventListener {
     private void handleDeleteRowsEvent(Event event) {
         DeleteRowsEventData eventData = event.getData();
         TableMapEventData tableMapEvent = getTableMapEvent(eventData.getTableId());
-        if (shouldSkipOnDatabaseName(tableMapEvent.getDatabase())) return;
+        if (shouldSkip(tableMapEvent)) return;
 
         DeleteEvent deleteEvent = new DeleteEvent(tableMapEvent,
                 eventData.getRows(),
@@ -154,9 +162,18 @@ public class RowEventListenerAdapter implements BinaryLogClient.EventListener {
         return ((EventHeaderV4)event.getHeader()).getNextPosition();
     }
 
+    private boolean shouldSkip(TableMapEventData tableMapEvent) {
+      return shouldSkipOnDatabaseName(tableMapEvent.getDatabase()) ||
+        shouldSkipOnTable(tableMapEvent.getTable());
+    }
+
     private boolean shouldSkipOnDatabaseName(String databaseName) {
         return this.databaseName != null &&
           !(this.databaseName.equalsIgnoreCase(databaseName) ||
               this.databaseName.equalsIgnoreCase(MYSQL_DATABASE_NAME));
+    }
+
+    private boolean shouldSkipOnTable(String tableName) {
+        return this.tables != null && !this.tables.contains(tableName);
     }
 }
