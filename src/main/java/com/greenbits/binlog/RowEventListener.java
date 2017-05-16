@@ -5,6 +5,8 @@ import com.github.shyiko.mysql.binlog.event.Event;
 public interface RowEventListener {
     void startup(ServerVersion version);
 
+    void shutdown();
+
     void beginTransaction();
 
     void onUpdate(UpdateEvent updateEvent);

@@ -28,6 +28,10 @@ class MyRowEventListener
     puts "Startup"
   end
 
+  def shutdown
+    puts "Shutdown"
+  end
+
   def begin_transaction
     puts "Begin transaction"
   end
