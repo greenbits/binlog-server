@@ -56,6 +56,7 @@ public class RowServer extends BinaryLogClient {
 
     public void stop() throws Exception {
         disconnect();
+        rowEventListener.shutdown();
     }
 
     private void assertOption(boolean valid, String option) {
